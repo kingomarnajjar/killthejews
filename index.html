@@ -1,0 +1,749 @@
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Shooter Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #222;
+            font-family: Arial, sans-serif;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            cursor: none;
+            background: url('/api/placeholder/1920/1080') no-repeat center center;
+            background-size: cover;
+            overflow: hidden;
+        }
+        .target {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            transition: transform 0.1s;
+        }
+        .target-type-1 {
+            background-color: red;
+        }
+        .target-type-2 {
+            background-color: blue;
+        }
+        .explosion {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle, yellow, orange, red);
+            border-radius: 50%;
+            animation: explode 0.5s forwards;
+            z-index: 5;
+        }
+        @keyframes explode {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        .bullet-hole {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #333;
+            border-radius: 50%;
+            border: 1px solid #666;
+            z-index: 1;
+        }
+        .muzzle-flash {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, white 10%, yellow 40%, orange 70%, transparent 100%);
+            border-radius: 50%;
+            transform: translate(-30px, -30px);
+            animation: flash 0.15s forwards;
+            pointer-events: none;
+            z-index: 10;
+        }
+        @keyframes flash {
+            0% { opacity: 1; transform: translate(-30px, -30px) scale(0.6); }
+            100% { opacity: 0; transform: translate(-30px, -30px) scale(1); }
+        }
+        .gun-model {
+            position: fixed;
+            bottom: 0;
+            right: 50%;
+            transform: translateX(100px);
+            width: 300px;
+            height: 200px;
+            background-image: url('/api/placeholder/300/200');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: bottom right;
+            z-index: 100;
+            pointer-events: none;
+            transition: transform 0.05s;
+            filter: drop-shadow(0 0 10px rgba(255, 165, 0, 0.5));
+        }
+        
+        .target {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            transition: transform 0.1s, opacity 0.2s;
+            background-size: cover;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+        }
+        
+        .target::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 2;
+        }
+        
+        .target::after {
+            content: '';
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 3;
+        }
+        
+        .target-type-1 {
+            background-color: #ff3333;
+            border: 3px solid #aa0000;
+        }
+        
+        .target-type-2 {
+            background-color: #3366ff;
+            border: 3px solid #0033aa;
+        }
+        
+        .health-bar {
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background-color: #333;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .health-fill {
+            height: 100%;
+            background-color: lime;
+            transition: width 0.2s;
+        }
+        
+        .damage-indicator {
+            position: absolute;
+            font-size: 14px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0px 0px 3px black;
+            opacity: 1;
+            transition: opacity 1s, transform 1s;
+        }
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 20px;
+            pointer-events: none;
+            text-shadow: 0px 0px 5px black;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        #weapon-hud {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: white;
+            font-size: 18px;
+            pointer-events: none;
+            text-shadow: 0px 0px 5px black;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+        }
+        
+        #ammo-counter {
+            display: flex;
+            align-items: center;
+        }
+        
+        .bullet-icon {
+            width: 10px;
+            height: 20px;
+            background-color: #ffcc00;
+            border-radius: 2px;
+            margin-right: 3px;
+            position: relative;
+        }
+        
+        .bullet-icon::after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: 2px;
+            width: 6px;
+            height: 6px;
+            background-color: #ffaa00;
+            border-radius: 50%;
+        }
+        
+        .empty-bullet {
+            background-color: #555;
+        }
+        
+        .empty-bullet::after {
+            background-color: #444;
+        }
+        
+        #weapon-info {
+            margin-right: 15px;
+        }
+        
+        #score-popup {
+            position: fixed;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0px 0px 5px black;
+            pointer-events: none;
+            opacity: 0;
+            transition: transform 0.5s, opacity 0.5s;
+            z-index: 1000;
+        }
+        
+        #hitmarker {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 1000;
+        }
+        
+        #hitmarker::before,
+        #hitmarker::after {
+            content: '';
+            position: absolute;
+            background-color: white;
+        }
+        
+        #hitmarker::before {
+            width: 2px;
+            height: 30px;
+            left: 14px;
+            top: 0;
+        }
+        
+        #hitmarker::after {
+            width: 30px;
+            height: 2px;
+            left: 0;
+            top: 14px;
+        }
+        
+        .screen-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 0, 0, 0.2);
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        #crosshair {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            pointer-events: none;
+            transform: translate(-20px, -20px);
+            opacity: 0.8;
+        }
+        #crosshair::before, #crosshair::after {
+            content: '';
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        #crosshair::before {
+            width: 2px;
+            height: 40px;
+            left: 19px;
+            top: 0;
+        }
+        #crosshair::after {
+            width: 40px;
+            height: 2px;
+            left: 0;
+            top: 19px;
+        }
+        #crosshair-dot {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background-color: rgba(255, 0, 0, 0.8);
+            border-radius: 50%;
+            left: 17px;
+            top: 17px;
+        }
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            display: none;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #instructions {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="hud">
+            <div>Score: <span id="score">0</span></div>
+            <div>Time: <span id="time">60</span>s</div>
+            <div>Mission: Shoot all RED targets!</div>
+            <div id="streak-counter">Streak: <span id="current-streak">0</span></div>
+            <div id="headshot-counter">Headshots: <span id="headshots">0</span></div>
+        </div>
+        <div id="weapon-hud">
+            <div id="weapon-info">
+                <div id="weapon-name">9mm Pistol</div>
+                <div id="fire-mode">Semi-Auto</div>
+            </div>
+            <div id="ammo-counter"></div>
+            <div id="reload-hint">(Press R to reload)</div>
+        </div>
+        <div id="crosshair"><div id="crosshair-dot"></div></div>
+        <div id="gun-model" class="gun-model"></div>
+        <div id="hitmarker"></div>
+        <div id="score-popup"></div>
+        <div class="screen-flash" id="damage-flash"></div>
+        <div id="instructions">
+            <h3>Instructions:</h3>
+            <p>Click to shoot at the RED targets. Avoid hitting BLUE targets as they will deduct points.</p>
+            <p>You have 60 seconds to get the highest score possible!</p>
+            <button id="start-game">Start Game</button>
+        </div>
+        <div id="game-over">
+            <h2>Game Over!</h2>
+            <p>Final Score: <span id="final-score">0</span></p>
+            <button id="restart-game">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const gameContainer = document.getElementById('game-container');
+            const scoreElement = document.getElementById('score');
+            const timeElement = document.getElementById('time');
+            const gameOverScreen = document.getElementById('game-over');
+            const finalScoreElement = document.getElementById('final-score');
+            const startGameButton = document.getElementById('start-game');
+            const restartGameButton = document.getElementById('restart-game');
+            const instructions = document.getElementById('instructions');
+            const crosshair = document.getElementById('crosshair');
+            const gunModel = document.getElementById('gun-model');
+            
+            let score = 0;
+            let timeRemaining = 60;
+            let gameActive = false;
+            let targets = [];
+            let targetGenerationInterval;
+            let countdownInterval;
+            let ammo = 6;
+            let maxAmmo = 6;
+            let reloading = false;
+            let lastShotTime = 0;
+            let shotDelay = 200; // ms between shots
+            let currentStreak = 0;
+            let bestStreak = 0;
+            let headshotCount = 0;
+            let difficultyLevel = 1;
+            let playerHealth = 100;
+            let damageFlashTimeout;
+            let scoreMultiplier = 1;
+            let hitmarkerSound;
+            
+            // Gun sounds
+            const gunshotSound = new Audio();
+            gunshotSound.src = "data:audio/wav;base64,UklGRnQFAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YU8FAACAgICAgICAgICAgICAgICAgICAgICEgIOFhIWGhoaIiYmLjIyOj5CRkZOUlJWXmJmam5ybnZ2cnJyenp+goKChoqGjo6OkpKSlpqWmqKepqaqrq6urrKysrK2sra6urq6urq6vrq+vr7CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLGxsbGxsLGxsbGxsbGxsbGysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrGxsbKysrKysrKysrGxsrGysrKysrKysrKysrKzs7S0tbW2tri4ubm7u7y8vb2+vr+/v8DAwcHCwsLDw8TFxsfIycnKy8rLy8vMzMzMzc3Nzc7Pz9DQ0NDR0dHS0tLT09PU1NTU1dXV1tbW1tfX2NjZ2dna2tvb3Nzd3d7e39/g4OHh4uLi4+Tk5eXm5ufn6Ojo6enq6urr6+vs7Ozt7e7u7+/w8PHx8vLz8/T09fb29vf3+Pj5+fr6+/v8/P39/f7+/v7///8AAAAAAAD+/v7+/f39/fz8/Pv7+vr5+fj49/f29vX19PTz8/Lx8fDv7u7t7ezs6+vq6uno6Ofn5uXl5OPj4uHh4ODf3t7d3dzc29va2dnY2NfX1tbV1dXU1NPT0tLR0dHQ0M/Pzs7Nzc3MzMzLy8vKycnIx8fGxcXEw8PCwsHBwMC/v76+vby8u7u6ubi4t7a2tbSzs7KysrGysbGxsbGxsrGysrKysrGysrGysrKysrKysrKysrKysrKxsrKysrKysrKysrKysrKysrKysrKxsbGxsbGxsbGxsbGxsbGxsbCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsK+ur66urq6urq6trKysq6urq6qpqaemoqCcmJSSjYmGgn97d3NwbGpnY2BbWFRRTkxJRkRCQT89PDo4NjUzMjEwLy0sKyopKCgnJiUmJSYkJCMjIyIiIiEiISIiIiIiIiIiIiIjIyMkJCQlJSYmJicnKCgpKissLC0uLzAxMTIzNDU2Nzg5Ozw9Pj9AQUJDREVGR0hJSktMTU5PUFFSVFRVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqusra6vr7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/v8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+            
+            const emptyClickSound = new Audio();
+            emptyClickSound.src = "data:audio/wav;base64,UklGRpYDAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YXIDAAAAAAEGBgsLDxEWGBweISImKSstMDM1ODo8PUBCREVGR0hJSktNTk9QUVFSU1NUVVZWVldYWFlZWlpaW1tcXFxdXV1dXV1eXl5fX19fX19gYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYF9fX19fXl5eXl1dXVxcXFtbWlpaWVlYWFdXVlZVVFRTUlJRUE9PTk1MS0pJSEdGRURDQkFAPz49PDs6OTg3NjU0MzIxMC8uLSwrKikoJyYlJCMiISAfHh0cGxoZGBcWFRQTEhEQDw4ODQwLCgkIBwYGBQQDAgEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAQICAwQEBQYHBwgJCgsLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj9AQUJDREVGR0hJSktMTU5PUFFSUlNUVVVWV1hYWVpbW1xdXV5eX19gYGFhYmJjY2RkZWVmZmZnZ2hoaWlqampra2xsbW1tbm5vb29wcHFxcXJycnNzc3R0dHV1dXZ2dnd3d3h4eHl5eXp6ent7e3x8fH19fX5+fn9/f4CAgIGBgYKCgoODg4SEhIWFhYaGhoeHh4iIiImJiYqKiouLi4yMjI2NjY6Ojo+Pj5CQkJGRkZKSkpOTk5SUlJWVlZaWlpeXl5iYmJmZmZqampubm5ycnJ2dnZ6enp+fn6CgoKGhoaKioqOjo6SkpKWlpaampqenp6ioqKmpqaqqqqurq6ysrK2tra6urq+vr7CwsLGxsbKysrOzs7S0tLW1tba2tre3t7i4uLm5ubq6uru7u7y8vL29vb6+vr+/v8DAwMHBwcLCwsPDw8TExMXFxcbGxsfHx8jIyMnJycrKysvLy8zMzM3Nzc7Ozs/Pz9DQ0NHR0dLS0tPT09TU1NXV1dbW1tfX19jY2NnZ2dra2tvb29zc3N3d3d7e3t/f3+Dg4OHh4eLi4uPj4+Tk5OXl5ebm5ufn5+jo6Onp6erq6uvr6+zs7O3t7e7u7u/v7/Dw8PHx8fLy8vPz8/T09PX19fb29vf39/j4+Pn5+fr6+vv7+/z8/P39/f7+/v8=";
+            
+            const reloadSound = new Audio();
+            reloadSound.src = "data:audio/wav;base64,UklGRoIDAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YXYDAAB8fYF/hH2JfY17j3eVd5NzmG6capNlk2eccKJ1o3mmf6aDqoitibCNs5O4mLuevKTAqcOuxLTJusi/0MXVzNnS3tTh1ubZ6trv3PXe+uD/4ATiBeeI6orwjvSR95b6nP2h/6cCqQatCLEKtQ24D7wTwRXEGMgczSDRJNQn2CzaL+Ay5DXmOOg76T7rQexE7UbtSu1N7U7tUO5S7lPvU+9U8FXwVvBX8FfwV/BX8VjxWPFY8VnxWfFa8lryWvJa8lvyW/Jb8lzzXPNc813zXfNe817zXvNf81/zX/Ng82DzYPNh82HzYvNi82PzY/Nk82TzZPNl82XzZvNm82fzZ/No82jzafNp82rza/Ns823zbvNv83HzcvN083XzePJ683vzdPN183jyevJ883vyffJ+8YDxgvGE8YXxh/GJ8YrxjfGP8ZLxlPGX8Znxm/Ge8aHxpPGn8avxrvGy8bbxufG98cHxxfHJ8czx0PHU8djx3PHh8eXx6vHu8fPx9/H88QHyBvIL8hDyFfIa8h/yJfIq8jDyNfI78kHyR/JN8lPyWfJf8mbybbJz8nrygfKI8o/ylvKd8qXyq/Kz8rvywfLJ8tHy2fLh8uny8PL48wD0CfQR9Br0IvQr9DT0PPRFNk03TjhPOVA6UDtQPFA9UD9QQFBBUEJQRFBFUEZQRlBHUEdQSFBIUElQSVBKUEpQSlBLUEtQS1BLUEtQTFBMUExQTFBMUExQTFBMUE1QTVBNUE1QTVBNUE1QTVBNUE1QTVBNUE1QTVBNUE1QTVBNUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOUE5QTlBOU";
+            
+            // Animation frames for recoil
+            let recoilAnimation = null;
+            
+            // Track mouse for crosshair
+            gameContainer.addEventListener('mousemove', (e) => {
+                crosshair.style.left = e.clientX + 'px';
+                crosshair.style.top = e.clientY + 'px';
+                
+                // Subtle gun movement following mouse
+                if (gameActive) {
+                    const centerX = window.innerWidth / 2;
+                    const centerY = window.innerHeight / 2;
+                    const offsetX = (e.clientX - centerX) / 20;
+                    const offsetY = (e.clientY - centerY) / 20;
+                    gunModel.style.transform = `translateX(${100 + offsetX}px) translateY(${offsetY}px)`;
+                }
+            });
+            
+            function startGame() {
+                // Reset game state
+                score = 0;
+                timeRemaining = 60;
+                gameActive = true;
+                ammo = 6;
+                reloading = false;
+                targets.forEach(target => target.element.remove());
+                targets = [];
+                
+                // Update UI
+                scoreElement.textContent = score;
+                timeElement.textContent = timeRemaining;
+                instructions.style.display = 'none';
+                gameOverScreen.style.display = 'none';
+                updateAmmoDisplay();
+                
+                // Make sure gun model is visible and properly positioned
+                gunModel.style.display = 'block';
+                gunModel.style.transform = 'translateX(100px)';
+                
+                // Start generating targets
+                targetGenerationInterval = setInterval(generateTarget, 1000);
+                
+                // Start countdown
+                countdownInterval = setInterval(() => {
+                    timeRemaining--;
+                    timeElement.textContent = timeRemaining;
+                    
+                    if (timeRemaining <= 0) {
+                        endGame();
+                    }
+                }, 1000);
+            }
+            
+            function endGame() {
+                gameActive = false;
+                clearInterval(targetGenerationInterval);
+                clearInterval(countdownInterval);
+                
+                // Display game over screen
+                finalScoreElement.textContent = score;
+                gameOverScreen.style.display = 'block';
+                
+                // Remove all targets
+                targets.forEach(target => target.element.remove());
+                targets = [];
+            }
+            
+            function generateTarget() {
+                if (!gameActive) return;
+                
+                const targetType = Math.random() < 0.7 ? 1 : 2; // 70% chance of type 1 (red - target to shoot)
+                
+                const targetElement = document.createElement('div');
+                targetElement.className = `target target-type-${targetType}`;
+                
+                // Random position
+                const x = Math.random() * (gameContainer.offsetWidth - 50);
+                const y = Math.random() * (gameContainer.offsetHeight - 50);
+                targetElement.style.left = x + 'px';
+                targetElement.style.top = y + 'px';
+                
+                gameContainer.appendChild(targetElement);
+                
+                // Target object
+                const target = {
+                    element: targetElement,
+                    type: targetType,
+                    x: x,
+                    y: y,
+                    speed: 1 + Math.random() * 2,
+                    direction: Math.random() * Math.PI * 2
+                };
+                
+                targets.push(target);
+                
+                // Remove target after random time
+                setTimeout(() => {
+                    if (targets.includes(target)) {
+                        targetElement.remove();
+                        targets = targets.filter(t => t !== target);
+                    }
+                }, 3000 + Math.random() * 2000);
+            }
+            
+            function updateTargets() {
+                targets.forEach(target => {
+                    // Update position
+                    target.x += Math.cos(target.direction) * target.speed;
+                    target.y += Math.sin(target.direction) * target.speed;
+                    
+                    // Bounce off walls
+                    if (target.x < 0 || target.x > gameContainer.offsetWidth - 50) {
+                        target.direction = Math.PI - target.direction;
+                        target.x = Math.max(0, Math.min(target.x, gameContainer.offsetWidth - 50));
+                    }
+                    if (target.y < 0 || target.y > gameContainer.offsetHeight - 50) {
+                        target.direction = -target.direction;
+                        target.y = Math.max(0, Math.min(target.y, gameContainer.offsetHeight - 50));
+                    }
+                    
+                    // Update element position
+                    target.element.style.left = target.x + 'px';
+                    target.element.style.top = target.y + 'px';
+                });
+                
+                if (gameActive) {
+                    requestAnimationFrame(updateTargets);
+                }
+            }
+            
+            function createExplosion(x, y) {
+                const explosion = document.createElement('div');
+                explosion.className = 'explosion';
+                explosion.style.left = x + 'px';
+                explosion.style.top = y + 'px';
+                gameContainer.appendChild(explosion);
+                
+                setTimeout(() => {
+                    explosion.remove();
+                }, 500);
+            }
+            
+            // Update ammo display
+            function updateAmmoDisplay() {
+                // Add ammo display to HUD if it doesn't exist
+                if (!document.getElementById('ammo-display')) {
+                    const ammoDiv = document.createElement('div');
+                    ammoDiv.id = 'ammo-display';
+                    document.getElementById('hud').appendChild(ammoDiv);
+                }
+                
+                // Update the ammo count
+                document.getElementById('ammo-display').textContent = `Ammo: ${ammo} / 6`;
+            }
+            
+            // Reload function
+            function reload() {
+                if (reloading || ammo === 6) return;
+                
+                reloading = true;
+                reloadSound.currentTime = 0;
+                reloadSound.play();
+                
+                // Show reload text
+                const reloadText = document.createElement('div');
+                reloadText.textContent = 'RELOADING...';
+                reloadText.style.position = 'absolute';
+                reloadText.style.bottom = '200px';
+                reloadText.style.right = '50%';
+                reloadText.style.transform = 'translateX(100px)';
+                reloadText.style.color = 'white';
+                reloadText.style.fontWeight = 'bold';
+                reloadText.style.fontSize = '24px';
+                gameContainer.appendChild(reloadText);
+                
+                // Reload animation - gun tilts down
+                gunModel.style.transform = 'translateX(100px) translateY(30px) rotate(-10deg)';
+                
+                setTimeout(() => {
+                    ammo = 6;
+                    updateAmmoDisplay();
+                    reloading = false;
+                    reloadText.remove();
+                    gunModel.style.transform = 'translateX(100px)';
+                }, 1500);
+            }
+            
+            // Handle weapon recoil
+            function applyRecoil() {
+                // Cancel any existing recoil animation
+                if (recoilAnimation) {
+                    cancelAnimationFrame(recoilAnimation);
+                }
+                
+                let recoilStrength = 20;
+                let recovery = 0;
+                
+                function animateRecoil() {
+                    if (recovery < 1) {
+                        recovery += 0.1;
+                        const currentRecoil = recoilStrength * (1 - recovery);
+                        gunModel.style.transform = `translateX(${100 - currentRecoil}px) translateY(${currentRecoil/2}px)`;
+                        recoilAnimation = requestAnimationFrame(animateRecoil);
+                    } else {
+                        gunModel.style.transform = 'translateX(100px)';
+                        recoilAnimation = null;
+                    }
+                }
+                
+                recoilAnimation = requestAnimationFrame(animateRecoil);
+            }
+            
+            // Handle shots
+            gameContainer.addEventListener('click', (e) => {
+                if (!gameActive) return;
+                if (reloading) return;
+                
+                const now = Date.now();
+                // Enforce minimum time between shots
+                if (now - lastShotTime < shotDelay) return;
+                lastShotTime = now;
+                
+                const clickX = e.clientX;
+                const clickY = e.clientY;
+                
+                // Check ammo
+                if (ammo <= 0) {
+                    // Play empty click sound
+                    emptyClickSound.currentTime = 0;
+                    emptyClickSound.play();
+                    return;
+                }
+                
+                // Decrease ammo
+                ammo--;
+                updateAmmoDisplay();
+                
+                // Play gunshot sound
+                gunshotSound.currentTime = 0;
+                gunshotSound.play();
+                
+                // Apply recoil effect
+                applyRecoil();
+                
+                // Create muzzle flash
+                const flash = document.createElement('div');
+                flash.className = 'muzzle-flash';
+                flash.style.left = clickX + 'px';
+                flash.style.top = clickY + 'px';
+                gameContainer.appendChild(flash);
+                
+                setTimeout(() => {
+                    flash.remove();
+                }, 150);
+                
+                // Check for hit targets
+                for (let i = targets.length - 1; i >= 0; i--) {
+                    const target = targets[i];
+                    const targetCenterX = target.x + 25;
+                    const targetCenterY = target.y + 25;
+                    
+                    // Check if shot hit the target (simple circle collision)
+                    const distance = Math.sqrt(
+                        Math.pow(clickX - targetCenterX, 2) + 
+                        Math.pow(clickY - targetCenterY, 2)
+                    );
+                    
+                    if (distance < 25) {
+                        // Hit logic
+                        if (target.type === 1) { // Red target (correct)
+                            score += 10;
+                        } else { // Blue target (wrong)
+                            score = Math.max(0, score - 5);
+                        }
+                        
+                        // Add bullet hole
+                        const bulletHole = document.createElement('div');
+                        bulletHole.className = 'bullet-hole';
+                        bulletHole.style.left = (clickX - 4) + 'px';
+                        bulletHole.style.top = (clickY - 4) + 'px';
+                        gameContainer.appendChild(bulletHole);
+                        
+                        // Remove bullet hole after some time
+                        setTimeout(() => {
+                            bulletHole.remove();
+                        }, 10000);
+                        
+                        scoreElement.textContent = score;
+                        
+                        // Visual feedback
+                        createExplosion(target.x, target.y);
+                        
+                        // Remove the target
+                        target.element.remove();
+                        targets.splice(i, 1);
+                        
+                        // Only hit one target per shot
+                        break;
+                    }
+                }
+            });
+            
+            // Start and restart buttons
+            startGameButton.addEventListener('click', () => {
+                startGame();
+                requestAnimationFrame(updateTargets);
+            });
+            
+            restartGameButton.addEventListener('click', () => {
+                startGame();
+                requestAnimationFrame(updateTargets);
+            });
+        });
+    </script>
+</body>
+</html>
