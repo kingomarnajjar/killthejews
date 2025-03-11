@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -23,16 +23,72 @@
         }
         .target {
             position: absolute;
-            width: 50px;
-            height: 50px;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
-            transition: transform 0.1s;
+            transition: transform 0.1s, opacity 0.2s;
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
         }
+        
+        .target::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 2;
+        }
+        
+        .target::after {
+            content: '';
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 3;
+        }
+        
         .target-type-1 {
-            background-color: red;
+            border: 3px solid #aa0000;
         }
+        
         .target-type-2 {
-            background-color: blue;
+            border: 3px solid #0033aa;
+        }
+        
+        .health-bar {
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background-color: #333;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .health-fill {
+            height: 100%;
+            background-color: lime;
+            transition: width 0.2s;
+        }
+        
+        .damage-indicator {
+            position: absolute;
+            font-size: 14px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0px 0px 3px black;
+            opacity: 1;
+            transition: opacity 1s, transform 1s;
         }
         .explosion {
             position: absolute;
@@ -70,93 +126,6 @@
         @keyframes flash {
             0% { opacity: 1; transform: translate(-30px, -30px) scale(0.6); }
             100% { opacity: 0; transform: translate(-30px, -30px) scale(1); }
-        }
-        .gun-model {
-            position: fixed;
-            bottom: 0;
-            right: 50%;
-            transform: translateX(100px);
-            width: 300px;
-            height: 200px;
-            background-image: url('/api/placeholder/300/200');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: bottom right;
-            z-index: 100;
-            pointer-events: none;
-            transition: transform 0.05s;
-            filter: drop-shadow(0 0 10px rgba(255, 165, 0, 0.5));
-        }
-        
-        .target {
-            position: absolute;
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            transition: transform 0.1s, opacity 0.2s;
-            background-size: cover;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
-        }
-        
-        .target::before {
-            content: '';
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.3);
-            z-index: 2;
-        }
-        
-        .target::after {
-            content: '';
-            position: absolute;
-            top: 25px;
-            left: 25px;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 3;
-        }
-        
-        .target-type-1 {
-            background-color: #ff3333;
-            border: 3px solid #aa0000;
-        }
-        
-        .target-type-2 {
-            background-color: #3366ff;
-            border: 3px solid #0033aa;
-        }
-        
-        .health-bar {
-            position: absolute;
-            bottom: -10px;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background-color: #333;
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        
-        .health-fill {
-            height: 100%;
-            background-color: lime;
-            transition: width 0.2s;
-        }
-        
-        .damage-indicator {
-            position: absolute;
-            font-size: 14px;
-            color: white;
-            font-weight: bold;
-            text-shadow: 0px 0px 3px black;
-            opacity: 1;
-            transition: opacity 1s, transform 1s;
         }
         #hud {
             position: absolute;
@@ -316,6 +285,22 @@
             left: 17px;
             top: 17px;
         }
+        .gun-model {
+            position: fixed;
+            bottom: 0;
+            right: 50%;
+            transform: translateX(100px);
+            width: 300px;
+            height: 200px;
+            background-image: url('/api/placeholder/300/200');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: bottom right;
+            z-index: 100;
+            pointer-events: none;
+            transition: transform 0.05s;
+            filter: drop-shadow(0 0 10px rgba(255, 165, 0, 0.5));
+        }
         #game-over {
             position: absolute;
             top: 50%;
@@ -401,6 +386,15 @@
             const crosshair = document.getElementById('crosshair');
             const gunModel = document.getElementById('gun-model');
             
+            // Custom target images
+            const targetImages = [
+                "https://pub-6affea2f837c47c2a8d1d16f2b8fa68e.r2.dev/happyjew.jpg",
+                "https://pub-6affea2f837c47c2a8d1d16f2b8fa68e.r2.dev/happyjew1.jpg",
+                "https://pub-6affea2f837c47c2a8d1d16f2b8fa68e.r2.dev/happyjew2.jpg",
+                "https://pub-6affea2f837c47c2a8d1d16f2b8fa68e.r2.dev/happyjew3.jpg",
+                "https://pub-6affea2f837c47c2a8d1d16f2b8fa68e.r2.dev/happyjew4.jpg"
+            ];
+            
             let score = 0;
             let timeRemaining = 60;
             let gameActive = false;
@@ -458,6 +452,10 @@
                 reloading = false;
                 targets.forEach(target => target.element.remove());
                 targets = [];
+                currentStreak = 0;
+                document.getElementById('current-streak').textContent = currentStreak;
+                headshotCount = 0;
+                document.getElementById('headshots').textContent = headshotCount;
                 
                 // Update UI
                 scoreElement.textContent = score;
@@ -503,14 +501,30 @@
                 
                 const targetType = Math.random() < 0.7 ? 1 : 2; // 70% chance of type 1 (red - target to shoot)
                 
+                // Choose a random image from our collection
+                const randomImageIndex = Math.floor(Math.random() * targetImages.length);
+                const targetImage = targetImages[randomImageIndex];
+                
                 const targetElement = document.createElement('div');
                 targetElement.className = `target target-type-${targetType}`;
+                
+                // Set the background image
+                targetElement.style.backgroundImage = `url(${targetImage})`;
                 
                 // Random position
                 const x = Math.random() * (gameContainer.offsetWidth - 50);
                 const y = Math.random() * (gameContainer.offsetHeight - 50);
                 targetElement.style.left = x + 'px';
                 targetElement.style.top = y + 'px';
+                
+                // Add health bar
+                const healthBar = document.createElement('div');
+                healthBar.className = 'health-bar';
+                const healthFill = document.createElement('div');
+                healthFill.className = 'health-fill';
+                healthFill.style.width = '100%';
+                healthBar.appendChild(healthFill);
+                targetElement.appendChild(healthBar);
                 
                 gameContainer.appendChild(targetElement);
                 
@@ -521,7 +535,10 @@
                     x: x,
                     y: y,
                     speed: 1 + Math.random() * 2,
-                    direction: Math.random() * Math.PI * 2
+                    direction: Math.random() * Math.PI * 2,
+                    health: 100,
+                    healthBar: healthFill,
+                    image: targetImage
                 };
                 
                 targets.push(target);
@@ -575,20 +592,20 @@
             
             // Update ammo display
             function updateAmmoDisplay() {
-                // Add ammo display to HUD if it doesn't exist
-                if (!document.getElementById('ammo-display')) {
-                    const ammoDiv = document.createElement('div');
-                    ammoDiv.id = 'ammo-display';
-                    document.getElementById('hud').appendChild(ammoDiv);
-                }
+                const ammoCounter = document.getElementById('ammo-counter');
+                ammoCounter.innerHTML = '';
                 
-                // Update the ammo count
-                document.getElementById('ammo-display').textContent = `Ammo: ${ammo} / 6`;
+                // Create bullet icons
+                for (let i = 0; i < maxAmmo; i++) {
+                    const bulletIcon = document.createElement('div');
+                    bulletIcon.className = i < ammo ? 'bullet-icon' : 'bullet-icon empty-bullet';
+                    ammoCounter.appendChild(bulletIcon);
+                }
             }
             
             // Reload function
             function reload() {
-                if (reloading || ammo === 6) return;
+                if (reloading || ammo === maxAmmo) return;
                 
                 reloading = true;
                 reloadSound.currentTime = 0;
@@ -610,7 +627,7 @@
                 gunModel.style.transform = 'translateX(100px) translateY(30px) rotate(-10deg)';
                 
                 setTimeout(() => {
-                    ammo = 6;
+                    ammo = maxAmmo;
                     updateAmmoDisplay();
                     reloading = false;
                     reloadText.remove();
@@ -641,6 +658,32 @@
                 }
                 
                 recoilAnimation = requestAnimationFrame(animateRecoil);
+            }
+            
+            // Show hit marker
+            function showHitMarker() {
+                const hitmarker = document.getElementById('hitmarker');
+                hitmarker.style.opacity = '1';
+                
+                setTimeout(() => {
+                    hitmarker.style.opacity = '0';
+                }, 100);
+            }
+            
+            // Show score popup
+            function showScorePopup(x, y, amount, isHeadshot) {
+                const popup = document.getElementById('score-popup');
+                popup.textContent = `${isHeadshot ? 'HEADSHOT! +' : '+'}${amount}`;
+                popup.style.left = x + 'px';
+                popup.style.top = (y - 30) + 'px';
+                popup.style.color = isHeadshot ? '#ff0000' : '#ffffff';
+                popup.style.opacity = '1';
+                popup.style.transform = 'translateY(0)';
+                
+                setTimeout(() => {
+                    popup.style.opacity = '0';
+                    popup.style.transform = 'translateY(-20px)';
+                }, 1000);
             }
             
             // Handle shots
@@ -686,50 +729,121 @@
                     flash.remove();
                 }, 150);
                 
+                // Add bullet hole to background
+                const bulletHole = document.createElement('div');
+                bulletHole.className = 'bullet-hole';
+                bulletHole.style.left = (clickX - 4) + 'px';
+                bulletHole.style.top = (clickY - 4) + 'px';
+                bulletHole.style.zIndex = '1'; // Below targets
+                gameContainer.appendChild(bulletHole);
+                
+                // Remove bullet hole after some time
+                setTimeout(() => {
+                    bulletHole.remove();
+                }, 10000);
+                
+                let targetHit = false;
+                
                 // Check for hit targets
                 for (let i = targets.length - 1; i >= 0; i--) {
                     const target = targets[i];
-                    const targetCenterX = target.x + 25;
-                    const targetCenterY = target.y + 25;
+                    const targetCenterX = target.x + 35;
+                    const targetCenterY = target.y + 35;
                     
-                    // Check if shot hit the target (simple circle collision)
+                    // Check if shot hit the target (circle collision)
                     const distance = Math.sqrt(
                         Math.pow(clickX - targetCenterX, 2) + 
                         Math.pow(clickY - targetCenterY, 2)
                     );
                     
-                    if (distance < 25) {
-                        // Hit logic
-                        if (target.type === 1) { // Red target (correct)
-                            score += 10;
-                        } else { // Blue target (wrong)
-                            score = Math.max(0, score - 5);
-                        }
+                    // Determine if it's a headshot (hit near center)
+                    const isHeadshot = distance < 15;
+                    
+                    if (distance < 35) {
+                        targetHit = true;
+                        showHitMarker();
                         
-                        // Add bullet hole
-                        const bulletHole = document.createElement('div');
-                        bulletHole.className = 'bullet-hole';
-                        bulletHole.style.left = (clickX - 4) + 'px';
-                        bulletHole.style.top = (clickY - 4) + 'px';
-                        gameContainer.appendChild(bulletHole);
+                        // Calculate damage based on distance from center
+                        let damage = isHeadshot ? 100 : 25 + (35 - distance);
                         
-                        // Remove bullet hole after some time
+                        // Apply damage
+                        target.health -= damage;
+                        
+                        // Update health bar
+                        target.healthBar.style.width = Math.max(0, target.health) + '%';
+                        
+                        // Show damage indicator
+                        const damageText = document.createElement('div');
+                        damageText.className = 'damage-indicator';
+                        damageText.textContent = Math.round(damage);
+                        damageText.style.left = (target.x + 35) + 'px';
+                        damageText.style.top = (target.y - 10) + 'px';
+                        gameContainer.appendChild(damageText);
+                        
+                        // Animate damage text
                         setTimeout(() => {
-                            bulletHole.remove();
-                        }, 10000);
+                            damageText.style.opacity = '0';
+                            damageText.style.transform = 'translateY(-20px)';
+                            setTimeout(() => {
+                                damageText.remove();
+                            }, 1000);
+                        }, 10);
                         
-                        scoreElement.textContent = score;
-                        
-                        // Visual feedback
-                        createExplosion(target.x, target.y);
-                        
-                        // Remove the target
-                        target.element.remove();
-                        targets.splice(i, 1);
+                        // Target is destroyed
+                        if (target.health <= 0) {
+                            // Calculate score based on target type
+                            let pointsGained = 0;
+                            if (target.type === 1) { // Red target (correct)
+                                pointsGained = isHeadshot ? 30 : 10;
+                                currentStreak++;
+                                
+                                // Update streak counter
+                                document.getElementById('current-streak').textContent = currentStreak;
+                                
+                                // Update headshot counter if applicable
+                                if (isHeadshot) {
+                                    headshotCount++;
+                                    document.getElementById('headshots').textContent = headshotCount;
+                                }
+                                
+                                // Bonus for streak
+                                if (currentStreak > 3) {
+                                    pointsGained += 5 * Math.floor(currentStreak / 3);
+                                }
+                            } else { // Blue target (wrong)
+                                pointsGained = -5;
+                                currentStreak = 0;
+                                document.getElementById('current-streak').textContent = currentStreak;
+                            }
+                            
+                            // Add points
+                            score += pointsGained;
+                            scoreElement.textContent = score;
+                            
+                            // Show score popup
+                            showScorePopup(target.x + 35, target.y, pointsGained, isHeadshot);
+                            
+                            // Visual feedback
+                            createExplosion(target.x, target.y);
+                            
+                            // Remove the target
+                            target.element.remove();
+                            targets.splice(i, 1);
+                        }
                         
                         // Only hit one target per shot
                         break;
                     }
+                }
+            });
+            
+            // Handle keyboard controls
+            document.addEventListener('keydown', (e) => {
+                if (!gameActive) return;
+                
+                // 'R' key for reload
+                if (e.key === 'r' || e.key === 'R') {
+                    reload();
                 }
             });
             
@@ -743,6 +857,18 @@
                 startGame();
                 requestAnimationFrame(updateTargets);
             });
+            
+            // Preload images
+            function preloadImages() {
+                targetImages.forEach(src => {
+                    const img = new Image();
+                    img.src = src;
+                });
+            }
+            
+            // Initialize game
+            preloadImages();
+            updateAmmoDisplay();
         });
     </script>
 </body>
