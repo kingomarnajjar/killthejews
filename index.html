@@ -9,7 +9,7 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #222;
+            background-color: black;
             font-family: Arial, sans-serif;
         }
         #game-container {
@@ -17,7 +17,7 @@
             width: 100vw;
             height: 100vh;
             cursor: none;
-            background: url('/api/placeholder/1920/1080') no-repeat center center;
+            background: url('https://pub-6affea2f837c47c2a8d1d16f2b8fa68e.r2.dev/911.jpg') no-repeat center center;
             background-size: cover;
             overflow: hidden;
         }
@@ -57,11 +57,15 @@
         }
         
         .target-type-1 {
-            border: 3px solid #aa0000;
+            border: 6px solid #ff0000;
         }
         
         .target-type-2 {
-            border: 3px solid #0033aa;
+            border: 6px solid #00b7ff;
+        }
+        
+        .target-type-3 {
+            border: 6px solid #ff9900;
         }
         
         .health-bar {
@@ -258,6 +262,7 @@
             pointer-events: none;
             transform: translate(-20px, -20px);
             opacity: 0.8;
+            z-index: 9999; /* Increased z-index to appear above targets */
         }
         #crosshair::before, #crosshair::after {
             content: '';
@@ -314,7 +319,7 @@
             display: none;
         }
         button {
-            background-color: #4CAF50;
+            background-color: #00ff08;
             border: none;
             color: white;
             padding: 10px 20px;
@@ -336,6 +341,33 @@
             color: white;
             max-width: 300px;
         }
+        #settings {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            display: none;
+        }
+        .settings-option {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .settings-button {
+            position: absolute;
+            top: 10px;
+            right: 330px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: 1px solid white;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -343,7 +375,7 @@
         <div id="hud">
             <div>Score: <span id="score">0</span></div>
             <div>Time: <span id="time">60</span>s</div>
-            <div>Mission: Shoot all JEW targets!</div>
+            <div>Mission: Shoot all RED JEW targets!</div>
             <div id="streak-counter">Streak: <span id="current-streak">0</span></div>
             <div id="headshot-counter">Headshots: <span id="headshots">0</span></div>
         </div>
@@ -360,11 +392,29 @@
         <div id="hitmarker"></div>
         <div id="score-popup"></div>
         <div class="screen-flash" id="damage-flash"></div>
+        <button class="settings-button" id="settings-button">⚙️ Settings</button>
         <div id="instructions">
             <h3>Instructions for Goyim:</h3>
-            <p>Click to shoot at the JEW targets. Avoid hitting BLUE targets as they will deduct points.</p>
+            <p>Click to shoot at the RED JEW targets. Avoid hitting BLUE targets as they will steal your points.</p>
+            <p>Avoid the ORANGE Hasbullah targets (big penalty)!</p>
             <p>You have 60 seconds to get the highest score possible!</p>
             <button id="start-game">Start Game</button>
+        </div>
+        <div id="settings">
+            <h3>Game Settings</h3>
+            <div class="settings-option">
+                <label for="auto-reload">Auto Reload:</label>
+                <input type="checkbox" id="auto-reload">
+            </div>
+            <div class="settings-option">
+                <label for="difficulty">Difficulty:</label>
+                <select id="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            <button id="save-settings">Save Settings</button>
         </div>
         <div id="game-over">
             <h2>Mossad won you filthy Goyim!</h2>
@@ -385,6 +435,11 @@
             const instructions = document.getElementById('instructions');
             const crosshair = document.getElementById('crosshair');
             const gunModel = document.getElementById('gun-model');
+            const settingsButton = document.getElementById('settings-button');
+            const settingsPanel = document.getElementById('settings');
+            const saveSettingsButton = document.getElementById('save-settings');
+            const autoReloadCheckbox = document.getElementById('auto-reload');
+            const difficultySelect = document.getElementById('difficulty');
             
             // Custom target images
             const targetImages = [
@@ -394,6 +449,9 @@
                 "https://pub-6affea2f837c47c2a8d1d16f2b8fa68e.r2.dev/happyjew3.jpg",
                 "https://pub-6affea2f837c47c2a8d1d16f2b8fa68e.r2.dev/happyjew4.jpg"
             ];
+            
+            // Hasbullah image to avoid
+            const hasbullahImage = "https://pub-6affea2f837c47c2a8d1d16f2b8fa68e.r2.dev/hasbullah.png";
             
             let score = 0;
             let timeRemaining = 60;
@@ -414,6 +472,7 @@
             let damageFlashTimeout;
             let scoreMultiplier = 1;
             let hitmarkerSound;
+            let autoReload = false;
             
             // Gun sounds
             const gunshotSound = new Audio();
@@ -427,6 +486,32 @@
             
             // Animation frames for recoil
             let recoilAnimation = null;
+            
+            // Settings panel toggle
+            settingsButton.addEventListener('click', () => {
+                if (settingsPanel.style.display === 'block') {
+                    settingsPanel.style.display = 'none';
+                } else {
+                    settingsPanel.style.display = 'block';
+                }
+            });
+            
+            // Save settings
+            saveSettingsButton.addEventListener('click', () => {
+                autoReload = autoReloadCheckbox.checked;
+                const difficulty = difficultySelect.value;
+                
+                // Apply difficulty settings
+                if (difficulty === 'easy') {
+                    difficultyLevel = 0.7;
+                } else if (difficulty === 'medium') {
+                    difficultyLevel = 1;
+                } else {
+                    difficultyLevel = 1.5;
+                }
+                
+                settingsPanel.style.display = 'none';
+            });
             
             // Track mouse for crosshair
             gameContainer.addEventListener('mousemove', (e) => {
@@ -461,6 +546,7 @@
                 scoreElement.textContent = score;
                 timeElement.textContent = timeRemaining;
                 instructions.style.display = 'none';
+                settingsPanel.style.display = 'none';
                 gameOverScreen.style.display = 'none';
                 updateAmmoDisplay();
                 
@@ -469,7 +555,7 @@
                 gunModel.style.transform = 'translateX(100px)';
                 
                 // Start generating targets
-                targetGenerationInterval = setInterval(generateTarget, 1000);
+                targetGenerationInterval = setInterval(generateTarget, 1000 / difficultyLevel);
                 
                 // Start countdown
                 countdownInterval = setInterval(() => {
@@ -499,17 +585,31 @@
             function generateTarget() {
                 if (!gameActive) return;
                 
-                const targetType = Math.random() < 0.7 ? 1 : 2; // 70% chance of type 1 (red - target to shoot)
+                // Random target type: 1=JEW (shoot), 2=BLUE (avoid), 3=HASBULLAH (big penalty)
+                // Adjust probability based on difficulty
+                let targetTypeRand = Math.random();
+                let targetType;
                 
-                // Choose a random image from our collection
-                const randomImageIndex = Math.floor(Math.random() * targetImages.length);
-                const targetImage = targetImages[randomImageIndex];
+                if (targetTypeRand < 0.7) {
+                    targetType = 1; // JEW target (to shoot)
+                } else if (targetTypeRand < 0.9) {
+                    targetType = 2; // BLUE target (to avoid)
+                } else {
+                    targetType = 3; // HASBULLAH target (bigger penalty)
+                }
                 
                 const targetElement = document.createElement('div');
                 targetElement.className = `target target-type-${targetType}`;
                 
-                // Set the background image
-                targetElement.style.backgroundImage = `url(${targetImage})`;
+                // Set the background image based on target type
+                if (targetType === 3) {
+                    // Hasbullah image
+                    targetElement.style.backgroundImage = `url(${hasbullahImage})`;
+                } else {
+                    // Choose a random image from our collection for other targets
+                    const randomImageIndex = Math.floor(Math.random() * targetImages.length);
+                    targetElement.style.backgroundImage = `url(${targetImages[randomImageIndex]})`;
+                }
                 
                 // Random position
                 const x = Math.random() * (gameContainer.offsetWidth - 50);
@@ -534,22 +634,21 @@
                     type: targetType,
                     x: x,
                     y: y,
-                    speed: 1 + Math.random() * 2,
+                    speed: (1 + Math.random() * 2) * difficultyLevel,
                     direction: Math.random() * Math.PI * 2,
-                    health: 100,
-                    healthBar: healthFill,
-                    image: targetImage
+                    health: targetType === 3 ? 150 : 100, // Hasbullah targets are tougher
+                    healthBar: healthFill
                 };
                 
                 targets.push(target);
                 
-                // Remove target after random time
+                // Remove target after random time (shorter time based on difficulty)
                 setTimeout(() => {
                     if (targets.includes(target)) {
                         targetElement.remove();
                         targets = targets.filter(t => t !== target);
                     }
-                }, 3000 + Math.random() * 2000);
+                }, (3000 + Math.random() * 2000) / difficultyLevel);
             }
             
             function updateTargets() {
@@ -673,10 +772,10 @@
             // Show score popup
             function showScorePopup(x, y, amount, isHeadshot) {
                 const popup = document.getElementById('score-popup');
-                popup.textContent = `${isHeadshot ? 'HEADSHOT! +' : '+'}${amount}`;
+                popup.textContent = `${isHeadshot ? 'HEADSHOT! ' : ''}${amount > 0 ? '+' : ''}${amount}`;
                 popup.style.left = x + 'px';
                 popup.style.top = (y - 30) + 'px';
-                popup.style.color = isHeadshot ? '#ff0000' : '#ffffff';
+                popup.style.color = amount > 0 ? (isHeadshot ? '#ff0000' : '#ffffff') : '#ff5555';
                 popup.style.opacity = '1';
                 popup.style.transform = 'translateY(0)';
                 
@@ -704,12 +803,23 @@
                     // Play empty click sound
                     emptyClickSound.currentTime = 0;
                     emptyClickSound.play();
+                    
+                    // Auto reload if enabled
+                    if (autoReload) {
+                        reload();
+                    }
+                    
                     return;
                 }
                 
                 // Decrease ammo
                 ammo--;
                 updateAmmoDisplay();
+                
+                // Auto reload if enabled and out of ammo
+                if (autoReload && ammo === 0) {
+                    reload();
+                }
                 
                 // Play gunshot sound
                 gunshotSound.currentTime = 0;
@@ -793,6 +903,7 @@
                         if (target.health <= 0) {
                             // Calculate score based on target type
                             let pointsGained = 0;
+                            
                             if (target.type === 1) { // Red target (correct)
                                 pointsGained = isHeadshot ? 30 : 10;
                                 currentStreak++;
@@ -810,10 +921,22 @@
                                 if (currentStreak > 3) {
                                     pointsGained += 5 * Math.floor(currentStreak / 3);
                                 }
-                            } else { // Blue target (wrong)
+                            } else if (target.type === 2) { // Blue target (wrong)
                                 pointsGained = -5;
                                 currentStreak = 0;
                                 document.getElementById('current-streak').textContent = currentStreak;
+                            } else if (target.type === 3) { // Hasbullah target (big penalty)
+                                pointsGained = -20;
+                                currentStreak = 0;
+                                document.getElementById('current-streak').textContent = currentStreak;
+                                
+                                // Flash screen red for hitting Hasbullah
+                                const damageFlash = document.getElementById('damage-flash');
+                                damageFlash.style.opacity = '1';
+                                clearTimeout(damageFlashTimeout);
+                                damageFlashTimeout = setTimeout(() => {
+                                    damageFlash.style.opacity = '0';
+                                }, 200);
                             }
                             
                             // Add points
@@ -864,6 +987,10 @@
                     const img = new Image();
                     img.src = src;
                 });
+                
+                // Preload Hasbullah
+                const hasbullahImg = new Image();
+                hasbullahImg.src = hasbullahImage;
             }
             
             // Initialize game
@@ -872,4 +999,4 @@
         });
     </script>
 </body>
-</html>
+</html>'
