@@ -343,8 +343,8 @@
         }
         #settings {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 60px;
+            right: 430px;
             background-color: rgba(0, 0, 0, 0.7);
             padding: 10px;
             border-radius: 5px;
@@ -360,7 +360,7 @@
         .settings-button {
             position: absolute;
             top: 10px;
-            right: 330px;
+            right: 430px;
             background-color: rgba(0, 0, 0, 0.7);
             color: white;
             border: 1px solid white;
@@ -368,6 +368,48 @@
             padding: 5px 10px;
             cursor: pointer;
         }
+        /* Music player styles */
+#music-toggle {
+    position: absolute;
+    bottom: 100px;
+    right: 50px;
+    width: 50px;
+    height: 50px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: 1px solid white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+#music-toggle.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.vinyl-spinning {
+    display: inline-block;
+    animation: spin 1.5s linear infinite;
+}
+
+.vinyl-ready {
+    display: inline-block;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
     </style>
 </head>
 <body>
@@ -393,6 +435,10 @@
         <div id="score-popup"></div>
         <div class="screen-flash" id="damage-flash"></div>
         <button class="settings-button" id="settings-button">⚙️ Settings</button>
+        <!-- Music Toggle Button -->
+<div id="music-toggle" class="pulse">
+    <span class="vinyl-ready">📻</span>
+</div>
         <div id="instructions">
             <h3>Instructions for Goyim:</h3>
             <p>Click to shoot at the RED JEW targets. Avoid hitting BLUE targets as they will steal your points.</p>
@@ -440,6 +486,46 @@
             const saveSettingsButton = document.getElementById('save-settings');
             const autoReloadCheckbox = document.getElementById('auto-reload');
             const difficultySelect = document.getElementById('difficulty');
+
+            const musicToggle = document.getElementById('music-toggle');
+
+// Background music setup
+const backgroundMusic = new Audio();
+backgroundMusic.src = "https://pub-6affea2f837c47c2a8d1d16f2b8fa68e.r2.dev/throwthejewdownthewell.mp3";
+backgroundMusic.loop = true;
+backgroundMusic.volume = 0.7;
+
+// Music player controls
+function playAudio() {
+    console.log("Playing audio...");
+    
+    // Set the currentTime to 26 seconds before playing
+    backgroundMusic.currentTime = 26;
+    
+    backgroundMusic.play().then(() => {
+        console.log("Audio playing successfully");
+        // Use a span wrapper to apply the animation
+        musicToggle.innerHTML = '<span class="vinyl-spinning">📀</span>';
+        musicToggle.classList.remove('pulse');
+    }).catch(error => {
+        console.error('Failed to play audio:', error);
+        musicToggle.innerHTML = '<span class="vinyl-ready">📻</span>';
+        musicToggle.classList.add('pulse');
+    });
+}
+
+function toggleMusic() {
+    if (backgroundMusic.paused) {
+        playAudio();
+    } else {
+        backgroundMusic.pause();
+        musicToggle.innerHTML = '<span class="vinyl-ready">📻</span>';
+        musicToggle.classList.add('pulse');
+    }
+}
+
+// Add music toggle click event
+musicToggle.addEventListener('click', toggleMusic);
             
             // Custom target images
             const targetImages = [
@@ -970,16 +1056,26 @@
                 }
             });
             
-            // Start and restart buttons
-            startGameButton.addEventListener('click', () => {
-                startGame();
-                requestAnimationFrame(updateTargets);
-            });
-            
-            restartGameButton.addEventListener('click', () => {
-                startGame();
-                requestAnimationFrame(updateTargets);
-            });
+           // Start and restart buttons
+startGameButton.addEventListener('click', () => {
+    startGame();
+    requestAnimationFrame(updateTargets);
+    
+    // Start music when game starts
+    if (backgroundMusic.paused) {
+        playAudio();
+    }
+});
+
+restartGameButton.addEventListener('click', () => {
+    startGame();
+    requestAnimationFrame(updateTargets);
+    
+    // Make sure music is playing
+    if (backgroundMusic.paused) {
+        playAudio();
+    }
+});
             
             // Preload images
             function preloadImages() {
@@ -997,6 +1093,19 @@
             preloadImages();
             updateAmmoDisplay();
         });
+        
+        // Preload audio
+backgroundMusic.load();
+gunshotSound.load();
+emptyClickSound.load();
+reloadSound.load();
+
+// Display error message if music fails to load
+backgroundMusic.addEventListener('error', function() {
+    console.error('Error loading music file');
+    musicToggle.innerHTML = '<span class="vinyl-ready">❌</span>';
+    musicToggle.title = "Music could not be loaded";
+});
     </script>
 </body>
 </html>'
