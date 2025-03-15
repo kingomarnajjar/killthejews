@@ -499,12 +499,13 @@ backgroundMusic.volume = 0.7;
 function playAudio() {
     console.log("Playing audio...");
     
-    // Set the currentTime to 26 seconds before playing
-    backgroundMusic.currentTime = 26;
+    // Only set the time to 26 seconds if it's at the beginning
+    if (backgroundMusic.currentTime === 0) {
+        backgroundMusic.currentTime = 26;
+    }
     
     backgroundMusic.play().then(() => {
         console.log("Audio playing successfully");
-        // Use a span wrapper to apply the animation
         musicToggle.innerHTML = '<span class="vinyl-spinning">📀</span>';
         musicToggle.classList.remove('pulse');
     }).catch(error => {
@@ -516,8 +517,18 @@ function playAudio() {
 
 function toggleMusic() {
     if (backgroundMusic.paused) {
-        playAudio();
+        // Continue playing from where it was paused
+        backgroundMusic.play().then(() => {
+            console.log("Audio playing successfully");
+            musicToggle.innerHTML = '<span class="vinyl-spinning">📀</span>';
+            musicToggle.classList.remove('pulse');
+        }).catch(error => {
+            console.error('Failed to play audio:', error);
+            musicToggle.innerHTML = '<span class="vinyl-ready">📻</span>';
+            musicToggle.classList.add('pulse');
+        });
     } else {
+        // Pause but don't reset the current time
         backgroundMusic.pause();
         musicToggle.innerHTML = '<span class="vinyl-ready">📻</span>';
         musicToggle.classList.add('pulse');
